@@ -1,7 +1,7 @@
 /**
  * Web Push 定时调度器
  *
- * VPS 启动后每 30 秒扫描一次：检查是否有任务到了提醒时间，
+ * VPS 启动后每 10 秒扫描一次：检查是否有任务到了提醒时间，
  * 有则通过 Web Push 向该用户的所有订阅设备发送推送通知。
  *
  * 替代了原来依赖手机端 AlarmManager 的不可靠方案。
@@ -145,9 +145,9 @@ export function startPushScheduler() {
   const keys = getVapidKeys();
   if (!keys) return;
 
-  console.log("[PushScheduler] Web Push 定时调度器已启动（每 30 秒扫描）");
+  console.log("[PushScheduler] Web Push 定时调度器已启动（每 10 秒扫描）");
 
-  // 立即执行一次，之后每 30 秒执行
+  // 立即执行一次，之后每 10 秒执行
   scanAndPush();
-  setInterval(scanAndPush, 30_000);
+  setInterval(scanAndPush, 10_000);
 }

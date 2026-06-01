@@ -358,12 +358,8 @@ export default function HomePage() {
       />
 
       {/* ── Main content area (offset for sidebar) ── */}
-      <div className="ml-0 md:ml-[60px] pb-[72px] md:pb-0">
-        <div className="flex items-center gap-2">
-          <Navbar stats={stats} />
-          <UserMenu />
-          <PushSubscribe />
-        </div>
+      <div className="ml-0 md:ml-[60px] pb-28 md:pb-0">
+        <Navbar stats={stats} />
 
         <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
           {/* Inline badges: weather + class + calendar */}
