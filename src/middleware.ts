@@ -16,7 +16,7 @@ const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/register", "/api/p
 // sw.js 必须放行：浏览器注册 Service Worker 时不会带 cookie，
 //   如果 302 到 /login 会导致 SW 注册失败，整个推送功能报废
 // icons/ 必须放行：推送通知弹出时，浏览器获取图标可能不带 cookie
-const PUBLIC_PREFIXES = ["/_next", "/favicon.ico", "/sw.js", "/icons/"];
+const PUBLIC_PREFIXES = ["/_next", "/favicon.ico", "/sw.js", "/manifest.json", "/icons/"];
 
 function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
