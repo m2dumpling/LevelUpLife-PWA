@@ -41,7 +41,7 @@ self.addEventListener("notificationclick", (event) => {
       // 如果已有打开的窗口，聚焦它
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
-          return (client as WindowClient).focus();
+          return client.focus();
         }
       }
       // 没有则打开新窗口
