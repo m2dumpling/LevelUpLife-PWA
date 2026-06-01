@@ -7,11 +7,12 @@
  * 替代了原来依赖手机端 AlarmManager 的不可靠方案。
  */
 import { db, schema } from "@/lib/db";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, ne, gt, desc } from "drizzle-orm";
 import webpush from "web-push";
 
 let running = false;
 let lastMinute = "";
+let lastFriendChatId = 0;
 
 /** 获取当前北京时间 HH:MM，不依赖 VPS 系统时区 */
 function getBeijingTimeNow(): string {
@@ -129,6 +130,32 @@ async function scanAndPush() {
         tag: `task-reminder-${task.id}`,
       };
 
+      for (const sub of subs) {
+        await sendPush(sub, payload);
+      }
+    }
+    // ── 好友私聊消息推送 ──
+    if (lastFriendChatId === 0) {
+      const latest = db.select().from(schema.friendChat).orderBy(desc(schema.friendChat.id)).limit(1).get();
+      lastFriendChatId = latest?.id ?? 0;
+    }
+
+    const newMsgs = db.select().from(schema.friendChat).where(gt(schema.friendChat.id, lastFriendChatId)).all();
+    for (const msg of newMsgs) {
+      if (msg.id > lastFriendChatId) lastFriendChatId = msg.id;
+      const subs = db.select().from(schema.pushSubscription).where(eq(schema.pushSubscription.userId, msg.friendId)).all();
+      if (subs.length === 0) continue;
+
+      const sender = db.select({ username: schema.user.username }).from(schema.user).where(eq(schema.user.id, msg.userId)).get();
+      const payload = {
+        title: `💬 ${sender?.username || "好友"} 发来消息`,
+        body: msg.message.slice(0, 80),
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-72.png",
+        vibrate: [200, 100, 200],
+        data: { url: `/pm?friend=${msg.userId}` },
+        tag: `friend-msg-${msg.id}`,
+      };
       for (const sub of subs) {
         await sendPush(sub, payload);
       }
