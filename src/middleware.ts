@@ -1,0 +1,87 @@
+/**
+ * Next.js Middleware — JWT 鉴权
+ *
+ * 所有非公开路由（/login + /api/auth/login 以外）均需验证 JWT cookie
+ * 无效/缺少 token → 重定向到 /login
+ */
+
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
+
+// 公开路由（无需登录）
+const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/register", "/api/push/vapid-key"];
+
+// PWA / Service Worker / Push 相关文件
+// sw.js 必须放行：浏览器注册 Service Worker 时不会带 cookie，
+//   如果 302 到 /login 会导致 SW 注册失败，整个推送功能报废
+// icons/ 必须放行：推送通知弹出时，浏览器获取图标可能不带 cookie
+const PUBLIC_PREFIXES = ["/_next", "/favicon.ico", "/sw.js", "/icons/"];
+
+function isPublic(pathname: string): boolean {
+  if (PUBLIC_PATHS.includes(pathname)) return true;
+  return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    // 开发环境可以用默认值
+    if (process.env.NODE_ENV === "development") {
+      return new TextEncoder().encode("dev-secret-do-not-use-in-production");
+    }
+    throw new Error("JWT_SECRET 环境变量未设置");
+  }
+  return new TextEncoder().encode(secret);
+}
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // 公开路由放行
+  if (isPublic(pathname)) {
+    return NextResponse.next();
+  }
+
+  // 检查 JWT cookie
+  const token = request.cookies.get("lul_token")?.value;
+
+  if (!token) {
+    const loginUrl = new URL("/login", request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, getJwtSecret());
+    const userId = String(payload.sub);
+    const role = (payload as { role?: string }).role || "user";
+
+    // 管理员路由保护
+    if ((pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) && role !== "admin") {
+      return NextResponse.json({ error: "无权访问" }, { status: 403 });
+    }
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-user-id", userId);
+    requestHeaders.set("x-user-role", role);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  } catch {
+    // Token 无效或过期
+    const loginUrl = new URL("/login", request.url);
+    const response = NextResponse.redirect(loginUrl);
+    response.cookies.delete("lul_token");
+    return response;
+  }
+}
+
+export const config = {
+  matcher: [
+    /*
+     * 匹配所有路径排除:
+     * - _next/static (静态文件)
+     * - _next/image (图片优化)
+     * - favicon.ico (图标)
+     */
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
+};
