@@ -1,7 +1,7 @@
 /**
  * Web Push 定时调度器
  *
- * VPS 启动后每 10 秒扫描一次：检查是否有任务到了提醒时间，
+ * VPS 启动后每 1 秒扫描一次：检查是否有任务到了提醒时间，
  * 有则通过 Web Push 向该用户的所有订阅设备发送推送通知。
  *
  * 替代了原来依赖手机端 AlarmManager 的不可靠方案。
@@ -13,6 +13,7 @@ import webpush from "web-push";
 let running = false;
 let lastMinute = "";
 let lastFriendChatId = 0;
+const pushedTasks = new Set<number>();
 
 /** 获取当前北京时间 HH:MM，不依赖 VPS 系统时区 */
 function getBeijingTimeNow(): string {
@@ -103,6 +104,8 @@ async function scanAndPush() {
     console.log(`[PushScheduler] ${currentMinute} — ${tasks.length} 个任务到提醒时间`);
 
     for (const task of tasks) {
+      if (pushedTasks.has(task.id)) continue;
+      pushedTasks.add(task.id);
       const subs = db
         .select()
         .from(schema.pushSubscription)
@@ -172,9 +175,9 @@ export function startPushScheduler() {
   const keys = getVapidKeys();
   if (!keys) return;
 
-  console.log("[PushScheduler] Web Push 定时调度器已启动（每 10 秒扫描）");
+  console.log("[PushScheduler] Web Push 定时调度器已启动（每 1 秒扫描）");
 
-  // 立即执行一次，之后每 10 秒执行
+  // 立即执行一次，之后每 1 秒执行
   scanAndPush();
-  setInterval(scanAndPush, 10_000);
+  setInterval(scanAndPush, 1_000);
 }
