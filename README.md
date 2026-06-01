@@ -1,8 +1,8 @@
-# LevelUp Life — Turn Daily Tasks into an RPG Adventure
+# LevelUp Life PWA — Push Notifications That Actually Work
 
-Complete tasks, earn XP/Gold, level up.
+> ⚠️ 这是 LevelUp Life 的 **PWA 增强版**，在原版基础上添加了 Web Push 通知系统。
+> 原版仓库：[LevelUpLife](https://github.com/m2dumpling/LevelUpLife) · 此版本可独立部署，互不冲突。
 
-> [中文说明](./README_zh-CN.md) | [Android App 📱](https://github.com/m2dumpling/LevelUpLife-App) | Deployed via Cloudflare Tunnel
 
 ---
 
@@ -110,6 +110,32 @@ Your task history determines your class (Warrior, Mage, Rogue, etc.) with unique
 
 ---
 
+## 🔔 Web Push — VPS 驱动的可靠通知
+
+**为什么原版通知不可靠？** 原版 Android App 使用本地 `AlarmManager` 调度——手机关机/重启 → 闹钟全丢；国产 ROM 杀进程 → 通知报废。
+
+**PWA 版方案：通知调度搬上 VPS，手机只管接收。**
+
+```
+VPS (一直在线)                浏览器 Push Service              手机
+─────────────               ──────────────────             ──────
+每 30 秒扫描提醒时间  ──Web Push──▶  FCM / APNs  ──系统通知──▶  弹出提醒
+                                                         点击 → 打开 App
+```
+
+| | 原版 App (本地通知) | PWA 版 (Web Push) |
+|---|---|---|
+| 手机关机/重启 | ❌ 通知丢失 | ✅ VPS 照常推送 |
+| App 被杀进程 | ❌ 无声 | ✅ 系统级通道 |
+| 小米/OPPO/vivo | ❌ 需手动加白名单 | ✅ FCM 不受影响 |
+| 更新推送 | 需重新打包 APK | ✅ 改 Web 即时生效 |
+
+**如何使用：** 登录后在页面顶部点击 **"🔔 开启通知"** → 浏览器请求权限 → 允许 → 到点自动推送。
+
+> iOS 限制：Safari 16.4+ 且需将网页"添加到主屏幕"。Chrome Android 完全支持。
+
+---
+
 ## 📱 Also on Android
 
 Want notifications that actually work? Get the **[LevelUp Life Android App →](https://github.com/m2dumpling/LevelUpLife-App)** — same game, native alarms, works offline.
@@ -136,110 +162,89 @@ Open `http://localhost:3000` → log in with your `.env` password.
 
 ---
 
-## ☁️ VPS Deployment
+## ☁️ VPS Deployment（与原项目并行运行）
 
-Tested on Ubuntu 24.04, 1 CPU / 1 GB RAM. Total cost: ~$4/month.
+在原 VPS 上新开端口部署，不影响正在运行的原版。
 
-### 0. Prerequisites
+### 0. 前提：生成 VAPID 密钥
 
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-apt install -y nodejs git
-npm install -g pm2
+npx web-push generate-vapid-keys
+# 记下 Public Key 和 Private Key
 ```
 
-### 1. Clone
+### 1. Clone（新目录，不与原项目冲突）
 
 ```bash
 cd /opt
-git clone https://github.com/m2dumpling/LevelUpLife.git levelup-life
-cd levelup-life
+git clone https://github.com/m2dumpling/LevelUpLife-PWA.git levelup-life-pwa
+cd levelup-life-pwa
 ```
 
 ### 2. Secrets
 
 ```bash
 cat > .env << EOF
-AUTH_PASSWORD=$(openssl rand -base64 16)
-JWT_SECRET=$(openssl rand -base64 32)
+AUTH_PASSWORD=你的密码
+JWT_SECRET=你的JWT密钥
+DATABASE_PATH=./data/levelup.db
+VAPID_PUBLIC_KEY=上面生成的Public_Key
+VAPID_PRIVATE_KEY=上面生成的Private_Key
+VAPID_SUBJECT=mailto:admin@119777.xyz
 EOF
 chmod 600 .env
-cat .env | grep AUTH_PASSWORD    # ← save this!
 ```
 
 ### 3. Build
 
 ```bash
-npm ci                          # ⚠️ NO --omit=dev — Tailwind needs it
-npx drizzle-kit push --force
+npm ci
+npx drizzle-kit push --force    # 新建 push_subscription 表
 npm run build
-npx tsx drizzle/seed.ts         # prints: 🎉 种子数据播种完成！
+npx tsx drizzle/seed.ts         # 首次运行
 ```
 
-### 4. Launch
+### 4. Launch（端口 3001，不与原 3000 冲突）
 
 ```bash
-pm2 start ecosystem.config.cjs
-pm2 save && pm2 startup         # auto-restart on reboot
-curl -I http://127.0.0.1:3000   # → 307 = working
+pm2 start npm --name leveluplife-pwa -- start -- -p 3001
+pm2 save
+curl -I http://127.0.0.1:3001   # → 307 = working
 ```
 
-### 5. Cloudflare Tunnel
+### 5. Cloudflare Tunnel 加域名
+
+原 Tunnel 已配好 `up.119777.xyz` → `localhost:3000`。
+PWA 版再加一条：`pwa.119777.xyz` → `localhost:3001`
 
 ```bash
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-  -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
+# 如果用 cloudflared tunnel config.yaml 方式：
+# 编辑配置文件，在 ingress 里加一条
 
-cloudflared tunnel login         # open the URL in YOUR browser
-cloudflared tunnel create levelup-life
+# 或者用 Cloudflare Dashboard：
+# Zero Trust → Networks → Tunnels → 你的 Tunnel → 配置
+# Public Hostname: pwa   Domain: 119777.xyz   Service: http://localhost:3001
 ```
 
-Cloudflare Dashboard → **Zero Trust** → **Networks** → **Tunnels** → Configure → **Public Hostname**:
-- Domain: your-domain.com → Type: HTTP → URL: `localhost:3000`
+### 6. 验证 Web Push 正常工作
 
 ```bash
-cat > /etc/systemd/system/cloudflared.service << 'EOF'
-[Unit]
-Description=Cloudflare Tunnel
-After=network.target
-[Service]
-ExecStart=/usr/local/bin/cloudflared tunnel run --url http://localhost:3000 levelup-life
-Restart=always
-RestartSec=5
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload && systemctl enable --now cloudflared
+# VPS 日志里应该看到：
+pm2 logs leveluplife-pwa | grep PushScheduler
+# [PushScheduler] Web Push 定时调度器已启动（每 30 秒扫描）
 ```
-
-### 6. Firewall
-
-```bash
-apt install -y ufw
-ufw default deny incoming && ufw default allow outgoing
-ufw allow 22/tcp && ufw --force enable
-```
-
-No need to open 80/443 — the tunnel uses outbound connections.
 
 ---
 
 ## 🔄 Updating
 
 ```bash
-cd /opt/levelup-life
-./update.sh                     # one-click: pull → build → restart
-```
-
-Or manual:
-
-```bash
+cd /opt/levelup-life-pwa
 git pull origin main
 npm ci                            # run when package-lock changed
 npm run build                     # ~20s
-npx drizzle-kit push --force      # required when reward_ledger/schema changes
-pm2 reload ecosystem.config.cjs
+npx drizzle-kit push --force      # required when schema changes
+pm2 reload leveluplife-pwa
 ```
 
 ---
@@ -277,7 +282,17 @@ pm2 reload ecosystem.config.cjs
 │   │   └── LevelUpModal.tsx    # Level-up celebration
 │   ├── hooks/                  # useTasks, useStats
 │   └── lib/                    # auth, db, xp-calc, shop-data, date-utils
-├── ecosystem.config.cjs        # pm2 config
-├── update.sh                   # One-click VPS update
+├── public/
+│   ├── sw.js                   # Service Worker（接收推送 → 弹出通知）
+│   ├── manifest.json           # PWA 清单（添加到主屏幕）
+│   └── icons/                  # App 图标（10 种尺寸）
+├── src/
+│   ├── instrumentation.ts      # Next.js 启动钩子（加载推送调度器）
+│   ├── lib/
+│   │   └── push-scheduler.ts   # 推送调度器（每 30 秒扫描提醒）
+│   ├── app/api/push/           # subscribe / unsubscribe / vapid-key
+│   └── components/
+│       └── PushSubscribe.tsx   # 开启通知按钮
+├── ecosystem.config.cjs        # pm2 config（原版用，PWA 用 pm2 start npm）
 └── .env.example
 ```
