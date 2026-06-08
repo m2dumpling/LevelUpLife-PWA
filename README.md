@@ -1,298 +1,245 @@
-# LevelUp Life PWA — Push Notifications That Actually Work
+# LevelUp Life PWA
 
-> ⚠️ 这是 LevelUp Life 的 **PWA 增强版**，在原版基础上添加了 Web Push 通知系统。
-> 原版仓库：[LevelUpLife](https://github.com/m2dumpling/LevelUpLife) · 此版本可独立部署，互不冲突。
+English | [中文](./README_zh-CN.md)
 
+LevelUp Life PWA is the Web Push version of LevelUp Life. It keeps the same RPG task system as the standard web app and adds an installable manifest, service worker, push subscription APIs, and a server-side reminder scheduler.
 
----
+Standard web version: [LevelUpLife](https://github.com/m2dumpling/LevelUpLife)
 
-## 🎮 How to Play
+## Current Status
 
-You're a hero. Every habit you build, every deadline you hit — that's XP. Level up. Buy gear. Fight the dark lord of procrastination.
+- Includes all non-push business logic from the standard web version.
+- Adds Web Push through VAPID keys, `public/sw.js`, push subscription APIs, and `src/lib/push-scheduler.ts`.
+- Can run beside the standard web app on the same VPS.
+- Recommended live layout:
+  - Standard web app: `/opt/levelup-life`, PM2 `levelup-life`, port `3000`
+  - PWA app: `/opt/levelup-life-pwa`, PM2 `leveluplife-pwa`, port `3001`
+- Recent regression fixes are covered by `npm run test:bugs`, including one-time gift prompts, task-owner reward isolation, boss reward distribution, guild lifetime XP ranking, daily settlement date handling, and push-related schema compatibility.
 
-### 📋 Two Types of Quests
+## Features
 
-| | Habit 🔥 | Plan 📋 |
-|------|---------|------|
-| **What** | Your daily grind: exercise, read, meditate, drink water... | One-shot mission: "Ship the feature by Friday" |
-| **When** | Every day / week / month — pick your weekdays | A specific date you choose |
-| **Win** | Check in each cycle → XP + Gold stack up | Complete on the due date → big payout |
+- Habit and plan tasks with XP, gold, HP, levels, streaks, achievements, story, heatmap, and monthly view.
+- Shop, crafting, backpack, medal equipment, pets, village, weather, and class bonuses.
+- PvP, daily lottery, world boss, guilds, guild chat, and gold gifts.
+- Gift notifications are server-side one-time prompts through `gift_log.seen_at`.
+- Installable PWA assets in `public/manifest.json`, `public/sw.js`, and `public/icons/`.
+- Server-side Web Push reminders, so reminders do not depend on a local Android alarm process.
 
-Tap **+ Create** → set difficulty → preview your quest → confirm. Tap the circle ○ to check in and watch XP fly up.
+## Tech Stack
 
-### 📈 Level Up or Die Trying
+- Next.js 16, React 19, TypeScript
+- Tailwind CSS v4, shadcn/ui style components, Framer Motion
+- SQLite, Drizzle ORM, better-sqlite3
+- JWT, bcryptjs
+- Web Push (`web-push`) with VAPID keys
+- PM2 standalone deployment, Cloudflare Tunnel friendly
 
-> Trivial 5XP · Easy 10XP · Medium 20XP · Hard 40XP · Heroic 80XP
-
-Formula: `xpToNext = 100 × level^1.5`. Level 1→2 is 100 XP. Level 50→51 is 35,000+. Things get real.
-
-### 💀 HP — Your Accountability Bar
-
-You start with **100 HP ❤️**. Every daily Habit you skip costs **5 HP**. Hit **zero** and you're *weakened* — **-10% XP** on everything until you recover.
-
-Log in each day to heal **+20 HP**. The game punishes neglect but rewards consistency.
-
-| HP | Status |
-|----|--------|
-| > 0 | Healthy — full XP |
-| 0 💀 | Weakened — **-10% XP penalty** |
-
-### ⚒️ Shop → Craft → Equip → Stack
-
-Gold isn't just for show. Spend it:
-
-```
-Shop 🏪 → buy ores → Craft ⚒️ → forge medals → Equip 🎒 → XP multiplier grows
-```
-
-| Ore | Price | Medal | Rarity | XP Bonus |
-|-----|-------|-------|--------|----------|
-| 🪨 Copper | 10G | 🥉 Copper Medal | Common | +2% |
-| ⛏️ Iron | 30G | 🥈 Iron Medal | Uncommon | +5% |
-| 🥇 Gold | 100G | 🥇 Gold Medal | Rare | +10% |
-| 💠 Mithril | 300G | 💠 Mithril Medal | Epic | +15% |
-| 💎 Adamantite | 1000G | 💎 Adamantite Medal | Legendary | +25% |
-
-Medals **multiply**. Five Copper Medals = 1.02⁵ ≈ **+10.4% XP** on every task. Stack wisely.
-
-### 🏆 Achievements & Story
-- **18 hidden & visible achievements** ⚔️ — from "First Quest" to "Quest King"
-- **6-chapter story** 📖 with NPCs, dialog, and rewards
-- **GitHub-style heatmap** 🟩 tracks your habit density
-- **Monthly view** 🗓️ shows the next 30 days at a glance
-
-### ⚔️ PvP Arena — Battle Other Heroes
-Challenge other players in real-time duels. Winner takes the pot (minus 2G tax).
-
-| Mode | How It Works |
-|------|-------------|
-| ✊ Rock-Paper-Scissors | Both players pick a move → reveal → winner announced with animated showdown |
-| 🎲 Dice Duel | Each player rolls a D20 — highest roll wins. Ties trigger re-rolls up to 3x |
-| ⏱ Speed Math | Race to solve a math problem. Correct answer + speed = victory |
-
-- Create a duel with 10–500G bets
-- Join waiting duels from other players
-- Real-time polling shows opponent's moves
-- Daily limit: 10 PvP matches
-- Entry requirement: complete at least 1 task today
-
-### 🎰 Daily Lottery
-Finish 3+ habits today → spin the wheel for free! Win medals, gold, rare items.
-
-### 🐲 World Boss
-Every habit completion deals damage to the shared World Boss. Defeat it together for server-wide rewards.
-
-### 🏰 Guild Hall — Fight Together
-- Create or join a guild with a 6-digit invite code
-- **Full-screen Discord-style chat** `/chat` with colored avatars, message grouping, and Beijing-time timestamps
-- Guild HP bar — damaged when members miss tasks
-- **Guild leaderboard** ranks guilds by total XP
-- Leader can kick members; members can leave
-
-### 🐾 Pet System
-Hatch pet eggs from task rewards. Each pet gives passive buffs (XP bonus, HP recovery, extra gold).
-
-### 🏡 Village
-Build your village! Each completed task contributes resources. Unlock buildings for permanent bonuses.
-
-### 🌦 Weather System
-Dynamic weather affects task rewards — sunny days boost XP, storms challenge you. Check the weather badge on your dashboard.
-
-### 🎭 Class System
-Your task history determines your class (Warrior, Mage, Rogue, etc.) with unique bonuses.
-
-### 🔒 Multi-User + Admin Panel
-- **Register/Login** — anyone can create an account (username + password)
-- **Admin dashboard** at `/admin` — user stats, registration trends, country distribution
-- Content audit flags suspicious task titles
-- Ban/unban users, export data, download DB backup
-- Only the seed-created `admin` account can access — no privilege escalation possible
-
----
-
-## 🔔 Web Push — VPS 驱动的可靠通知
-
-**为什么原版通知不可靠？** 原版 Android App 使用本地 `AlarmManager` 调度——手机关机/重启 → 闹钟全丢；国产 ROM 杀进程 → 通知报废。
-
-**PWA 版方案：通知调度搬上 VPS，手机只管接收。**
-
-```
-VPS (一直在线)                浏览器 Push Service              手机
-─────────────               ──────────────────             ──────
-每 30 秒扫描提醒时间  ──Web Push──▶  FCM / APNs  ──系统通知──▶  弹出提醒
-                                                         点击 → 打开 App
-```
-
-| | 原版 App (本地通知) | PWA 版 (Web Push) |
-|---|---|---|
-| 手机关机/重启 | ❌ 通知丢失 | ✅ VPS 照常推送 |
-| App 被杀进程 | ❌ 无声 | ✅ 系统级通道 |
-| 小米/OPPO/vivo | ❌ 需手动加白名单 | ✅ FCM 不受影响 |
-| 更新推送 | 需重新打包 APK | ✅ 改 Web 即时生效 |
-
-**如何使用：** 登录后在页面顶部点击 **"🔔 开启通知"** → 浏览器请求权限 → 允许 → 到点自动推送。
-
-> iOS 限制：Safari 16.4+ 且需将网页"添加到主屏幕"。Chrome Android 完全支持。
-
----
-
-## 📱 Also on Android
-
-Want notifications that actually work? Get the **[LevelUp Life Android App →](https://github.com/m2dumpling/LevelUpLife-App)** — same game, native alarms, works offline.
-
----
-
-## 🛠 Tech Stack
-
-Next.js 16 · TypeScript · Tailwind CSS v4 · shadcn/ui · SQLite · Drizzle ORM · JWT + bcrypt · Framer Motion · pm2 · Cloudflare Tunnel
-
----
-
-## 🖥 Local Dev
+## Local Development
 
 ```bash
 npm install
-cp .env.example .env          # Set AUTH_PASSWORD + JWT_SECRET
-npx drizzle-kit push --force  # Sync SQLite schema
+cp .env.example .env
+npm run db:push
+npx tsx drizzle/seed.ts
 npm run dev
-npx tsx drizzle/seed.ts       # First run only
 ```
 
-Open `http://localhost:3000` → log in with your `.env` password.
+Open `http://localhost:3000`.
 
----
+Required `.env` values:
 
-## ☁️ VPS Deployment（与原项目并行运行）
+```bash
+AUTH_PASSWORD=your-secret-password
+JWT_SECRET=change-me-to-a-random-string-at-least-32-chars
+DATABASE_PATH=./data/levelup.db
+VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PRIVATE_KEY=your-vapid-private-key
+VAPID_SUBJECT=mailto:admin@example.com
+```
 
-在原 VPS 上新开端口部署，不影响正在运行的原版。
-
-### 0. 前提：生成 VAPID 密钥
+Generate VAPID keys:
 
 ```bash
 npx web-push generate-vapid-keys
-# 记下 Public Key 和 Private Key
 ```
 
-### 1. Clone（新目录，不与原项目冲突）
+## Verification
+
+```bash
+npm run test:bugs
+npm run build
+```
+
+`npm run test:bugs` is the focused business-regression suite. `npm run build` verifies the production Next.js build.
+
+## Production Install Beside The Web App
+
+This is the recommended layout when the VPS already has the standard web version installed:
+
+- PWA path: `/opt/levelup-life-pwa`
+- PM2 app: `leveluplife-pwa`
+- Port: `3001`
+- Database mode: either share `/opt/levelup-life/data/levelup.db` with the standard web app, or use an independent absolute path.
+
+If the PWA should send reminders for the same users and tasks as the existing web app, use the shared database:
+
+```bash
+DATABASE_PATH=/opt/levelup-life/data/levelup.db
+```
+
+If the PWA should be independent, use:
+
+```bash
+DATABASE_PATH=/opt/levelup-life-pwa/data/levelup.db
+```
+
+Do not use a relative production database path such as `./data/levelup.db` under PM2 standalone. It can point at `.next/standalone/data` and create an empty database, which causes `SQLITE_ERROR: no such table: user`.
+
+Install Node.js 22 and PM2 first:
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+apt install -y nodejs git
+npm install -g pm2
+```
+
+Clone with SSH if the VPS has deploy keys configured:
 
 ```bash
 cd /opt
-git clone https://github.com/m2dumpling/LevelUpLife-PWA.git levelup-life-pwa
-cd levelup-life-pwa
+git clone git@github.com:m2dumpling/LevelUpLife-PWA.git levelup-life-pwa
+cd /opt/levelup-life-pwa
 ```
 
-### 2. Secrets
+Create `.env`:
 
 ```bash
-cat > .env << EOF
-AUTH_PASSWORD=你的密码
-JWT_SECRET=你的JWT密钥
-DATABASE_PATH=./data/levelup.db
-VAPID_PUBLIC_KEY=上面生成的Public_Key
-VAPID_PRIVATE_KEY=上面生成的Private_Key
-VAPID_SUBJECT=mailto:admin@119777.xyz
+cat > .env <<'EOF'
+AUTH_PASSWORD=replace-with-login-password
+JWT_SECRET=replace-with-a-long-random-secret
+DATABASE_PATH=/opt/levelup-life/data/levelup.db
+VAPID_PUBLIC_KEY=replace-with-vapid-public-key
+VAPID_PRIVATE_KEY=replace-with-vapid-private-key
+VAPID_SUBJECT=mailto:admin@example.com
 EOF
 chmod 600 .env
 ```
 
-### 3. Build
+Build and initialize schema:
 
 ```bash
 npm ci
-npx drizzle-kit push --force    # 新建 push_subscription 表
+npm run db:push
 npm run build
-npx tsx drizzle/seed.ts         # 首次运行
+npx tsx drizzle/seed.ts
 ```
 
-### 4. Launch（端口 3001，不与原 3000 冲突）
+Start PM2 on port `3001`:
 
 ```bash
-pm2 start npm --name leveluplife-pwa -- start -- -p 3001
+pm2 start ecosystem.config.cjs
 pm2 save
-curl -I http://127.0.0.1:3001   # → 307 = working
 ```
 
-### 5. Cloudflare Tunnel 加域名
-
-原 Tunnel 已配好 `up.119777.xyz` → `localhost:3000`。
-PWA 版再加一条：`pwa.119777.xyz` → `localhost:3001`
+Health check:
 
 ```bash
-# 如果用 cloudflared tunnel config.yaml 方式：
-# 编辑配置文件，在 ingress 里加一条
-
-# 或者用 Cloudflare Dashboard：
-# Zero Trust → Networks → Tunnels → 你的 Tunnel → 配置
-# Public Hostname: pwa   Domain: 119777.xyz   Service: http://localhost:3001
+curl -I http://127.0.0.1:3001
 ```
 
-### 6. 验证 Web Push 正常工作
+`307` redirecting to `/login` is normal for an unauthenticated request.
 
-```bash
-# VPS 日志里应该看到：
-pm2 logs leveluplife-pwa | grep PushScheduler
-# [PushScheduler] Web Push 定时调度器已启动（每 30 秒扫描）
-```
+## Updating An Installed VPS
 
----
-
-## 🔄 Updating
+For the existing `/opt/levelup-life-pwa` deployment:
 
 ```bash
 cd /opt/levelup-life-pwa
-git pull origin main
-npm ci                            # run when package-lock changed
-npm run build                     # ~20s
-npx drizzle-kit push --force      # required when schema changes
-pm2 reload leveluplife-pwa
+git fetch origin
+git status
+cp /opt/levelup-life/data/levelup.db /opt/levelup-life/data/levelup.db.bak-$(date +%Y%m%d%H%M%S)
+git pull --ff-only origin main
+npm ci --no-audit --no-fund
+npm run build
+pm2 restart leveluplife-pwa --update-env
+curl -I http://127.0.0.1:3001
 ```
 
----
+If this PWA uses an independent database, back up that file instead:
 
-## 🩹 Troubleshooting
-
-| Symptom | Fix |
-|---------|-----|
-| Build: `Cannot find module @tailwindcss/postcss` | `npm ci --omit=dev` kills dev deps. Rerun `npm ci && npm run build` |
-| Seed: `AUTH_PASSWORD 未设置` | Pull latest — seed script now auto-loads `.env` |
-| Browser 404 but `curl localhost` works | Cloudflare Tunnel Public Hostname not pointing to `localhost:3000` |
-| pm2: `next start` warning | Pull latest `ecosystem.config.cjs` (uses `server.js` now) |
-| Blank page / no data | You skipped the seed step: `npx tsx drizzle/seed.ts` |
-| `drizzle-kit push --forc` fails | It's `--force`, not `--forc` |
-
----
-
-## 📁 Project Structure
-
+```bash
+cp /opt/levelup-life-pwa/data/levelup.db /opt/levelup-life-pwa/data/levelup.db.bak-$(date +%Y%m%d%H%M%S)
 ```
-├── drizzle/                    # DB schema + seed
-├── src/
-│   ├── app/
-│   │   ├── api/                # REST: tasks, auth, shop, craft, inventory, logs
-│   │   └── login/              # Auth page
-│   ├── components/
-│   │   ├── TaskList.tsx        # Task tabs + create/edit/search/filter
-│   │   ├── TaskCard.tsx        # Task card (check in / edit / undo / delete)
-│   │   ├── StatDashboard.tsx   # Stats panel (Lv, XP, Gold, HP, Streak)
-│   │   ├── Heatmap.tsx         # Contribution graph (week/month/year)
-│   │   ├── MonthlyView.tsx     # 30-day task overview
-│   │   ├── Timeline.tsx        # Daily activity log
-│   │   ├── ShopDialog.tsx      # Ore shop
-│   │   ├── BackpackDialog.tsx  # Inventory + medal equip
-│   │   └── LevelUpModal.tsx    # Level-up celebration
-│   ├── hooks/                  # useTasks, useStats
-│   └── lib/                    # auth, db, xp-calc, shop-data, date-utils
-├── public/
-│   ├── sw.js                   # Service Worker（接收推送 → 弹出通知）
-│   ├── manifest.json           # PWA 清单（添加到主屏幕）
-│   └── icons/                  # App 图标（10 种尺寸）
-├── src/
-│   ├── instrumentation.ts      # Next.js 启动钩子（加载推送调度器）
-│   ├── lib/
-│   │   └── push-scheduler.ts   # 推送调度器（每 30 秒扫描提醒）
-│   ├── app/api/push/           # subscribe / unsubscribe / vapid-key
-│   └── components/
-│       └── PushSubscribe.tsx   # 开启通知按钮
-├── ecosystem.config.cjs        # pm2 config（原版用，PWA 用 pm2 start npm）
-└── .env.example
+
+If `drizzle/schema.ts` changed, run this after the database backup and before restart:
+
+```bash
+npm run db:push
+```
+
+The included `ecosystem.config.cjs` and `update.sh` assume the PWA is installed at `/opt/levelup-life-pwa`, the PM2 app is named `leveluplife-pwa`, and the standard web database is available at `/opt/levelup-life/data`:
+
+```bash
+cd /opt/levelup-life-pwa
+./update.sh
+```
+
+## Web Push Notes
+
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` must be set before push scheduling can run.
+- The scheduler starts from `src/instrumentation.ts` when the Next.js server starts.
+- Current scheduler log line:
+
+```text
+[PushScheduler] Web Push 定时调度器已启动（每 1 秒扫描）
+```
+
+Check logs:
+
+```bash
+pm2 logs leveluplife-pwa --lines 80 --nostream
+```
+
+On iOS, Web Push requires Safari 16.4+ and the site must be added to the Home Screen. Chrome/Edge on Android support Web Push through the browser push service.
+
+## Cloudflare Tunnel
+
+If the standard app already uses `localhost:3000`, add another public hostname for the PWA:
+
+```text
+pwa.your-domain.com -> http://localhost:3001
+```
+
+The standard web app can keep:
+
+```text
+your-domain.com -> http://localhost:3000
+```
+
+## Troubleshooting
+
+| Symptom | Meaning / Fix |
+| --- | --- |
+| `curl -I` returns `307 location: /login` | Healthy. The app redirects anonymous users to login. |
+| `SQLITE_ERROR: no such table: user` or `no such table: task` | PM2 is pointing at a new/empty database. Use an absolute `DATABASE_PATH`, then `pm2 restart leveluplife-pwa --update-env`. |
+| Push scheduler says VAPID keys are missing | Set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in `.env` or PM2 env. |
+| `Failed to find Server Action "x"` after deploy | Usually stale browser/PWA chunks from an older build. Refresh, close old tabs, or clear site data. |
+| `pm2 logs` appears stuck | It is tailing logs by design. Press `Ctrl+C`, or use `--nostream`. |
+| Build cannot find Tailwind packages | Do not install with `--omit=dev`; production build needs dev dependencies. Run `npm ci` then `npm run build`. |
+
+## Project Layout
+
+```text
+drizzle/                  Database schema, migrations, seed script
+public/manifest.json      PWA manifest
+public/sw.js              Service worker for push events
+public/icons/             PWA icons
+src/app/                  Next.js pages and API routes
+src/app/api/push/         Subscribe, unsubscribe, and VAPID key APIs
+src/components/           Main UI components, including PushSubscribe
+src/instrumentation.ts    Starts the push scheduler on server boot
+src/lib/push-scheduler.ts Server-side reminder scanning and Web Push sending
+tests/                    Business regression tests
+ecosystem.config.cjs      PM2 config for /opt/levelup-life-pwa on port 3001
+update.sh                 VPS update helper for the PWA deployment
 ```

@@ -1,14 +1,14 @@
-// pm2 配置 — 比 Docker 快 5x
 module.exports = {
   apps: [
     {
-      name: "levelup-life",
+      name: "leveluplife-pwa",
       script: ".next/standalone/server.js",
-      cwd: "/opt/levelup-life",
+      cwd: "/opt/levelup-life-pwa",
       env: {
         NODE_ENV: "production",
-        PORT: "3000",
+        PORT: "3001",
         HOSTNAME: "0.0.0.0",
+        // Share the standard web app database so PWA reminders use the same users/tasks.
         DATABASE_PATH: "/opt/levelup-life/data/levelup.db",
       },
       max_memory_restart: "300M",
