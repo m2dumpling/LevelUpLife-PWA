@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cloud, Store, Package, Gift, Swords, Shield, Users } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
-import { UserMenu } from "@/components/UserMenu";
 import { Sidebar, type SidebarItem } from "@/components/Sidebar";
 import { BossWidget } from "@/components/BossWidget";
 import { StatDashboard } from "@/components/StatDashboard";
