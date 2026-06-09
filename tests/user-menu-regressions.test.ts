@@ -27,11 +27,14 @@ applyMigration(sqlite, "0001_nosy_skrulls.sql");
 applyMigration(sqlite, "0002_gift_seen_at.sql");
 sqlite.close();
 
-test("navbar renders the account avatar menu beside session controls", () => {
-  const source = readFileSync(join(projectRoot, "src", "components", "Navbar.tsx"), "utf8");
+test("account avatar menu is mounted beside Navbar like the web version", () => {
+  const navbarSource = readFileSync(join(projectRoot, "src", "components", "Navbar.tsx"), "utf8");
+  const pageSource = readFileSync(join(projectRoot, "src", "app", "page.tsx"), "utf8");
 
-  assert.match(source, /import\s+\{\s*UserMenu\s*\}\s+from\s+["']@\/components\/UserMenu["']/);
-  assert.match(source, /<UserMenu\s*\/>/);
+  assert.doesNotMatch(navbarSource, /import\s+\{\s*UserMenu\s*\}\s+from\s+["']@\/components\/UserMenu["']/);
+  assert.doesNotMatch(navbarSource, /<UserMenu\s*\/>/);
+  assert.match(pageSource, /import\s+\{\s*UserMenu\s*\}\s+from\s+["']@\/components\/UserMenu["']/);
+  assert.match(pageSource, /<div\s+className="flex items-center gap-2">\s*<Navbar\s+stats=\{stats\}\s*\/>\s*<UserMenu\s*\/>\s*<\/div>/s);
 });
 
 test("user PATCH changes password only when the current password is valid", async () => {
