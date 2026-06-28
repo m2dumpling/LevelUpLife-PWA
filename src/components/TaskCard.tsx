@@ -111,7 +111,7 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
       exit={{ opacity: 0, x: -100, height: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={`
-        group relative flex items-center gap-3 p-3 rounded-lg border select-none
+        group relative flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border select-none
         transition-colors duration-200
         ${
           task.completed
@@ -155,9 +155,9 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
 
       {/* ── 内容 ── */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <span
-            className={`text-sm font-medium truncate ${
+            className={`text-sm font-medium truncate min-w-0 ${
               task.completed
                 ? "line-through text-muted-foreground"
                 : "text-foreground"
@@ -240,10 +240,10 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
       </div>
 
       {/* ── 右侧信息 ── */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
         {/* 难度标签 */}
         <span
-          className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${
+          className={`text-[9px] sm:text-[10px] font-medium px-1 sm:px-1.5 py-0.5 rounded border ${
             difficultyBorder[task.difficulty]
           } ${diffColor}`}
         >
@@ -252,17 +252,17 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
 
         {/* 奖励 */}
         <div className="flex flex-col items-end gap-0.5">
-          <span className="text-[10px] font-bold text-emerald-400">
+          <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400">
             +{task.xpReward} XP
           </span>
-          <span className="text-[10px] font-bold text-amber-400">
+          <span className="text-[9px] sm:text-[10px] font-bold text-amber-400">
             +{task.goldReward} G
           </span>
         </div>
 
-        {/* 历史最佳 (日常任务) */}
+        {/* 历史最佳 — 移动端隐藏（行内已显示连击数，避免重复占位） */}
         {isHabit && task.bestStreak > 0 && (
-          <div className="flex items-center gap-0.5">
+          <div className="hidden sm:flex items-center gap-0.5">
             <Star className="w-3 h-3 text-amber-400" />
             <span className="text-[10px] text-amber-400">{task.bestStreak}</span>
           </div>
@@ -274,7 +274,7 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
             e.stopPropagation();
             onEdit(task);
           }}
-          className="p-1.5 hover:bg-accent rounded"
+          className="p-1 sm:p-1.5 hover:bg-accent rounded"
         >
           <Pencil className="w-4 h-4 text-muted-foreground hover:text-foreground" />
         </button>
@@ -286,7 +286,7 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
               e.stopPropagation();
               onUncomplete(task.id);
             }}
-            className="p-1.5 hover:bg-amber-500/10 rounded"
+            className="p-1 sm:p-1.5 hover:bg-amber-500/10 rounded"
           >
             <RotateCcw className="w-4 h-4 text-amber-400" />
           </button>
@@ -298,7 +298,7 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
             e.stopPropagation();
             onDelete(task.id);
           }}
-          className="p-1.5 hover:bg-destructive/10 rounded"
+          className="p-1 sm:p-1.5 hover:bg-destructive/10 rounded"
         >
           <Trash2 className="w-4 h-4 text-destructive/60 hover:text-destructive" />
         </button>

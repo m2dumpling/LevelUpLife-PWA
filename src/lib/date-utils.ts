@@ -42,6 +42,18 @@ export function getDaysFromTodayLocal(n: number): string {
   return formatBeijingDate(new Date(Date.now() + n * DAY_MS));
 }
 
+/** Return the Beijing date one day after the given YYYY-MM-DD string. */
+export function getNextDayLocal(dateStr: string): string {
+  const d = new Date(`${dateStr}T12:00:00+08:00`);
+  return formatBeijingDate(new Date(d.getTime() + DAY_MS));
+}
+
+/** Return the Beijing date N days before the given YYYY-MM-DD string. */
+export function getDaysBeforeDate(dateStr: string, n: number): string {
+  const d = new Date(`${dateStr}T12:00:00+08:00`);
+  return formatBeijingDate(new Date(d.getTime() - n * DAY_MS));
+}
+
 /** Format an ISO date string as HH:MM in Beijing time. */
 export function formatBeijingTime(iso: string): string {
   const d = new Date(iso);

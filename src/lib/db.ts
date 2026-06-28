@@ -5,6 +5,7 @@ import * as schema from "../../drizzle/schema";
 // 确保 data 目录存在（构建和运行时都需要）
 import { mkdirSync } from "fs";
 import { dirname } from "path";
+import { getYesterdayLocal } from "@/lib/date-utils";
 
 const dbPath = process.env.DATABASE_PATH || "./data/levelup.db";
 
@@ -60,6 +61,18 @@ try {
   sqlite.exec("ALTER TABLE gift_log ADD COLUMN seen_at text");
 } catch {
   // Column already exists.
+}
+
+// 数据迁移：lastSettlementDate 为 NULL 的用户永久跳过 HP 结算
+// （settleIfNeeded 中 !null 判断导致 early return）
+try {
+  const yesterday = getYesterdayLocal();
+  const result = sqlite.prepare(`UPDATE "user" SET last_settlement_date = ? WHERE last_settlement_date IS NULL`).run(yesterday);
+  if (result.changes > 0) {
+    console.log(`[db] 初始化 ${result.changes} 个用户的 last_settlement_date = ${yesterday}`);
+  }
+} catch (e) {
+  console.warn("[db] 初始化 last_settlement_date 失败:", e);
 }
 
 export const db = drizzle(sqlite, { schema });

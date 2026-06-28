@@ -7,13 +7,14 @@
 
 import { db, schema } from "@/lib/db";
 import { eq, and, lt, ne } from "drizzle-orm";
-import { getTodayLocal, getYesterdayLocal, getDaysAgoLocal, getDayOfWeek, getDayOfMonth } from "@/lib/date-utils";
+import { getTodayLocal, getYesterdayLocal, getDaysAgoLocal, getNextDayLocal, getDaysBeforeDate, getDayOfWeek, getDayOfMonth } from "@/lib/date-utils";
 import { addStoneOnStreak, getVillageEffects } from "@/lib/village";
 import { assignClass } from "@/lib/class-analyzer";
 
 const HP_PENALTY_PER_MISSED = 5;
 const BASE_HP_RECOVERY_ON_LOGIN = 20;
 const INACTIVE_DAYS = 15;
+const SETTLE_MAX_DAYS = 365;
 
 let cleanupRanToday = false;
 
@@ -44,9 +45,9 @@ function handlePetFeeding(userId: number, dateStr: string) {
     .run();
 
   if (!fed) {
-    // 检查连续 3 天是否均未完成任何习惯
-    const d2 = getDaysAgoLocal(2);
-    const d3 = getDaysAgoLocal(3);
+    // 检查以 dateStr 为基准的最近 3 天（dateStr、dateStr-1、dateStr-2）
+    const d2 = getDaysBeforeDate(dateStr, 1);
+    const d3 = getDaysBeforeDate(dateStr, 2);
 
     let hasAnyRecent = false;
     for (const d of [dateStr, d2, d3]) {
@@ -129,50 +130,81 @@ export function settleIfNeeded(userId: number): {
   // ── 计算用户级连续天数 (streakDays) ──
   const habits = db.select().from(schema.task).where(and(eq(schema.task.mode, "habit"), eq(schema.task.userId, userId))).all();
 
-  // 结算昨天
   if (!user.lastSettlementDate || user.lastSettlementDate >= yesterday) {
     runCleanupIfNeeded();
     return { hpChanged, penaltyApplied, hpLost, missedCount };
   }
 
-  const dueHabits = habits.filter((h) => habitMatchesDate(h.frequency, yesterday, h.frequencyDays));
-
-  if (dueHabits.length === 0) {
-    // 无到期习惯，重置连续天数
-    db.update(schema.user)
-      .set({ lastSettlementDate: yesterday, streakDays: 0, totalDays: user.totalDays + 1 })
-      .where(eq(schema.user.id, userId)).run();
-    handlePetFeeding(userId, yesterday);
-    runCleanupIfNeeded();
-    return { hpChanged, penaltyApplied, hpLost, missedCount };
+  // ── 一次性加载所有 habitLog，避免循环内逐日查询 ──
+  const allLogs = db.select().from(schema.habitLog)
+    .where(eq(schema.habitLog.userId, userId))
+    .all();
+  const logsByDate = new Map<string, Set<number>>();
+  for (const log of allLogs) {
+    const set = logsByDate.get(log.completedAt) || new Set<number>();
+    set.add(log.taskId);
+    logsByDate.set(log.completedAt, set);
   }
 
-  const yesterdayLogs = db.select().from(schema.habitLog).where(and(eq(schema.habitLog.completedAt, yesterday), eq(schema.habitLog.userId, userId))).all();
-  const completedIds = new Set(yesterdayLogs.map((l) => l.taskId));
-  missedCount = dueHabits.filter((h) => !completedIds.has(h.id)).length;
+  // ── 结算从 lastSettlementDate 次日至昨日的每一天 ──
+  let currentStreak = user.streakDays;
+  let totalMissed = 0;
+  let totalHpLost = 0;
+  let daysProcessed = 0;
 
-  if (missedCount > 0) {
-    hpLost = missedCount * HP_PENALTY_PER_MISSED;
-    const newHp = Math.max(0, user.hp - hpLost);
+  let settleDate = getNextDayLocal(user.lastSettlementDate);
+
+  // 缺勤超过 365 天时截断，防止请求耗时过长
+  const cappedStart = getDaysBeforeDate(yesterday, SETTLE_MAX_DAYS - 1);
+  if (settleDate < cappedStart) {
+    console.log(`[settle] 用户 ${userId} 缺勤超过 ${SETTLE_MAX_DAYS} 天，从 ${cappedStart} 开始结算`);
+    settleDate = cappedStart;
+    currentStreak = 0;
+  }
+
+  while (settleDate <= yesterday) {
+    const dueHabits = habits.filter((h) => habitMatchesDate(h.frequency, settleDate, h.frequencyDays));
+
+    if (dueHabits.length === 0) {
+      // 无到期习惯 → 连续天数重置
+      currentStreak = 0;
+    } else {
+      const dayCompletedIds = logsByDate.get(settleDate) || new Set<number>();
+      const missed = dueHabits.filter((h) => !dayCompletedIds.has(h.id)).length;
+
+      if (missed > 0) {
+        totalMissed += missed;
+        totalHpLost += missed * HP_PENALTY_PER_MISSED;
+        currentStreak = 0;
+      } else {
+        // 全部完成 → 连续天数 +1
+        currentStreak += 1;
+        stoneGained += addStoneOnStreak(userId, currentStreak);
+      }
+    }
+
+    handlePetFeeding(userId, settleDate);
+    daysProcessed++;
+    settleDate = getNextDayLocal(settleDate);
+  }
+
+  // ── 汇总写入 DB ──
+  const newBestStreak = Math.max(currentStreak, user.bestStreak);
+  const newTotalDays = user.totalDays + daysProcessed;
+
+  if (totalHpLost > 0) {
+    const newHp = Math.max(0, user.hp - totalHpLost);
     db.update(schema.user)
-      .set({ hp: newHp, hpPenaltyActive: newHp <= 0, lastSettlementDate: yesterday, streakDays: 0, totalDays: user.totalDays + 1 })
+      .set({ hp: newHp, hpPenaltyActive: newHp <= 0, lastSettlementDate: yesterday, streakDays: currentStreak, bestStreak: newBestStreak, totalDays: newTotalDays })
       .where(eq(schema.user.id, userId)).run();
     penaltyApplied = true; hpChanged = true;
+    hpLost = totalHpLost;
+    missedCount = totalMissed;
   } else {
-    // 全部完成：连续天数 +1
-    const newStreak = user.streakDays + 1;
-    const newBestStreak = Math.max(newStreak, user.bestStreak);
-    const newTotalDays = user.totalDays + 1;
     db.update(schema.user)
-      .set({ lastSettlementDate: yesterday, streakDays: newStreak, bestStreak: newBestStreak, totalDays: newTotalDays })
+      .set({ lastSettlementDate: yesterday, streakDays: currentStreak, bestStreak: newBestStreak, totalDays: newTotalDays })
       .where(eq(schema.user.id, userId)).run();
-
-    // ── 石料掉落（基于用户连续天数） ──
-    stoneGained = addStoneOnStreak(userId, newStreak);
   }
-
-  // ── 宠物喂食 & 饥饿检测 ──
-  handlePetFeeding(userId, yesterday);
 
   // ── 周一分配职业 ──
   // getDayOfWeek returns 0=Sun, 1=Mon, ..., 6=Sat for the given date string

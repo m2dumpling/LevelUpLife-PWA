@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { hashPassword, createToken, getCookieOptions } from "@/lib/auth";
 import { eq } from "drizzle-orm";
+import { getYesterdayLocal } from "@/lib/date-utils";
 
 // In-memory rate limiter: max 3 registrations per IP per hour
 const rateMap = new Map<string, { count: number; resetAt: number }>();
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
         passwordHash,
         registerIp,
         registerCountry,
+        lastSettlementDate: getYesterdayLocal(),
         createdAt: now,
         updatedAt: now,
       })
