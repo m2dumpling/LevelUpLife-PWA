@@ -314,7 +314,7 @@ export function TaskList({
     }
   };
 
-  const tabLabel = activeTab === "habit" ? "Habit" : "Plan";
+  const tabLabel = activeTab === "habit" ? "日常任务" : "主线任务";
   const tabIcon =
     activeTab === "habit" ? (
       <Flame className="w-4 h-4" />
@@ -353,7 +353,7 @@ export function TaskList({
                 ) : (
                   <CalendarDays className="w-3.5 h-3.5" />
                 )}
-                {tab === "habit" ? "Habit" : "Plan"}
+                {tab === "habit" ? "日常" : "主线"}
               </span>
             </button>
           ))}
@@ -592,7 +592,7 @@ export function TaskList({
                       ) : (
                         <Target className="w-4 h-4 text-amber-400" />
                       )}
-                      确认{dialogMode === "edit" ? "修改" : "创建"} {activeTab === "habit" ? "Habit" : "Plan"}
+                      确认{dialogMode === "edit" ? "修改" : "创建"} {activeTab === "habit" ? "日常任务" : "主线任务"}
                     </div>
                     <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
                       <span className="text-muted-foreground">名称</span>
@@ -729,8 +729,8 @@ export function TaskList({
           ) : habitList.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Flame className="w-10 h-10 mx-auto mb-3 opacity-20" />
-              <p className="text-lg mb-2">暂无 Habit</p>
-              <p className="text-sm">点击「新建 Habit」创建每日修行！</p>
+              <p className="text-sm font-semibold mb-1">暂无日常任务</p>
+              <p className="text-xs text-muted-foreground/70">点击右上「新建日常」开始修行</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -812,8 +812,8 @@ export function TaskList({
           ) : plans.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Target className="w-10 h-10 mx-auto mb-3 opacity-20" />
-              <p className="text-lg mb-2">暂无 Plan</p>
-              <p className="text-sm">点击「新建 Plan」开启新的冒险！</p>
+              <p className="text-sm font-semibold mb-1">暂无主线/支线</p>
+              <p className="text-xs text-muted-foreground/70">点击右上「新建任务」规划冒险</p>
             </div>
           ) : (
             <div className="space-y-4">

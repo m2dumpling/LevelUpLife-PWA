@@ -21,9 +21,9 @@ export function XPBar({ xp, xpToNext, level }: XPBarProps) {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-black text-emerald-400 uppercase tracking-wider">Lv.{level}</span>
-        <span className="text-xs text-muted-foreground tabular-nums font-semibold">{xp} / {xpToNext} XP</span>
+      <div className="flex items-center justify-between mb-1.5 gap-2">
+        <span className="text-xs font-black text-emerald-400 uppercase tracking-wider shrink-0">Lv.{level}</span>
+        <span className="text-[11px] text-muted-foreground tabular-nums font-semibold whitespace-nowrap shrink-0">{xp} / {xpToNext} XP</span>
       </div>
       <div className="relative w-full h-2.5 rounded-full bg-muted overflow-hidden border border-border/40">
         <motion.div
