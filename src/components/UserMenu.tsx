@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { User, X, Lock, Shield, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,11 +61,11 @@ export function UserMenu() {
         {initial}
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setOpen(false)}>
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+      {typeof window !== "undefined" && open && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setOpen(false)}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             onClick={e => e.stopPropagation()}
-            className="bg-card border border-border rounded-xl w-[calc(100%-2rem)] max-w-sm overflow-hidden">
+            className="arcane-panel bg-card w-full max-w-sm overflow-hidden shadow-2xl">
             {/* Header */}
             <div className="bg-gradient-to-br from-primary/10 to-secondary/5 p-5 text-center">
               <div className="w-14 h-14 rounded-full bg-primary/20 text-primary font-bold text-2xl flex items-center justify-center mx-auto mb-2 border-2 border-primary/30">
@@ -116,7 +117,8 @@ export function UserMenu() {
               <button onClick={() => setOpen(false)} className="w-full text-xs text-muted-foreground hover:text-foreground">关闭</button>
             </div>
           </motion.div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
