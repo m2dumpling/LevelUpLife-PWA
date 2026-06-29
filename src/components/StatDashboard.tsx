@@ -124,12 +124,12 @@ export function StatDashboard({ stats, loading }: StatDashboardProps) {
                           <p className="text-[10px] text-muted-foreground mt-0.5">{h.date} · {h.source || h.type}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 ml-2">
-                          {h.amount !== undefined && (
-                            <span className={`font-bold tabular-nums text-[11px] ${h.amount >= 0 ? "text-amber-400" : "text-red-400"}`}>
-                              {h.amount > 0 ? "+" : ""}{h.amount}G
+                          {h.amount !== undefined && h.amount !== 0 && (
+                            <span className={`font-bold tabular-nums text-[11px] ${h.amount > 0 ? "text-emerald-400" : "text-red-400"}`}>
+                              {h.amount > 0 ? "+" : ""}{h.amount}{detail?.type === "gold" ? "G" : detail?.type === "hp" ? "HP" : ""}
                             </span>
                           )}
-                          {h.xp !== undefined && (
+                          {h.xp !== undefined && h.xp > 0 && (
                             <span className="font-bold tabular-nums text-[11px] text-emerald-400">+{h.xp}XP</span>
                           )}
                         </div>
