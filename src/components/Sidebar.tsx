@@ -55,8 +55,8 @@ export function Sidebar({
   }, [moreOpen]);
 
   const containerClass = isMobile
-    ? "fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border flex items-center justify-around px-2 py-1"
-    : "fixed left-0 top-0 bottom-0 z-40 w-[60px] bg-card border-r border-border flex flex-col items-center py-3 gap-0.5";
+    ? "fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-lg border-t border-border/60 flex items-center justify-around px-2 py-1 safe-bottom"
+    : "fixed left-0 top-0 bottom-0 z-40 w-[60px] bg-card/80 backdrop-blur-lg border-r border-border/50 flex flex-col items-center py-3 gap-0.5";
 
   return (
     <div className={containerClass}>

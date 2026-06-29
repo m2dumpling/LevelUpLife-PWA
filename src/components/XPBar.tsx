@@ -15,42 +15,25 @@ export function XPBar({ xp, xpToNext, level }: XPBarProps) {
   const targetPercent = xpProgressPercent(xp, xpToNext);
 
   useEffect(() => {
-    // 平滑过渡到目标百分比
-    const timer = setTimeout(() => {
-      setDisplayPercent(targetPercent);
-    }, 50);
+    const timer = setTimeout(() => setDisplayPercent(targetPercent), 50);
     return () => clearTimeout(timer);
   }, [targetPercent]);
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-            Lv.{level}
-          </span>
-        </div>
-        <span className="text-xs text-muted-foreground tabular-nums">
-          {xp} / {xpToNext} XP
-        </span>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-black text-emerald-400 uppercase tracking-wider">Lv.{level}</span>
+        <span className="text-xs text-muted-foreground tabular-nums font-semibold">{xp} / {xpToNext} XP</span>
       </div>
-      <div className="relative w-full h-3 rounded-full bg-muted overflow-hidden border border-border">
+      <div className="relative w-full h-2.5 rounded-full bg-muted overflow-hidden border border-border/40">
         <motion.div
-          className="h-full rounded-full"
+          className="h-full rounded-full shimmer-bar"
           style={{
-            background:
-              "linear-gradient(90deg, oklch(0.6_0.2_142) 0%, oklch(0.72_0.22_142) 50%, oklch(0.65_0.2_142) 100%)",
-            boxShadow: "0 0 12px oklch(0.65_0.2_142 / 0.5), inset 0 1px 0 oklch(1_0_0 / 0.2)",
+            background: "linear-gradient(90deg, oklch(0.55 0.2 150) 0%, oklch(0.68 0.22 148) 50%, oklch(0.6 0.2 150) 100%)",
           }}
           initial={{ width: 0 }}
           animate={{ width: `${displayPercent}%` }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-        />
-        {/* 光泽扫过 */}
-        <motion.div
-          className="absolute top-0 left-0 h-full w-8 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-          animate={{ left: ["-2rem", `${displayPercent}%`] }}
-          transition={{ duration: 1.5, ease: "easeInOut", delay: 0.2 }}
         />
       </div>
     </div>

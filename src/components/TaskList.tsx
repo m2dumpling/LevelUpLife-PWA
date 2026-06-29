@@ -323,10 +323,10 @@ export function TaskList({
     );
 
   return (
-    <div className="space-y-4">
+    <div className="arcane-panel p-5 space-y-5">
       {/* Tab 切换 */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-1 bg-muted rounded-lg p-0.5">
+        <div className="flex gap-1 bg-muted/60 rounded-xl p-1">
           {(["habit", "plan"] as TabMode[]).map((tab) => (
             <button
               key={tab}

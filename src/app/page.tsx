@@ -359,7 +359,7 @@ export default function HomePage() {
 
       {/* ── Main content area (offset for sidebar) ── */}
       <div className="ml-0 md:ml-[60px] pb-28 md:pb-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40 bg-background/80 backdrop-blur-lg sticky top-0 z-30">
           <Navbar stats={stats} />
           <UserMenu />
         </div>

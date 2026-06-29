@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -102,7 +102,7 @@ export function VillageWidget() {
       <motion.div
         initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-card rounded-xl p-4 border border-border"
+        className="arcane-panel p-5 space-y-4"
       >
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-foreground">我的村庄</h3>
@@ -124,7 +124,7 @@ export function VillageWidget() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedBuilding(b.key)}
-                className="flex flex-col items-center gap-1 p-2 rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer border border-transparent hover:border-border"
+                className="flex flex-col items-center gap-1 p-2 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all cursor-pointer border border-border/30 hover:border-primary/20 hover:-translate-y-0.5"
               >
                 <span className="text-2xl">{b.emoji}</span>
                 <span className="text-[10px] text-muted-foreground">

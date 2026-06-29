@@ -48,72 +48,89 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ─── 浅色主题 (默认) ─── */
+/* ═══════════════════════════════════════════
+   ARCANEPUNK GRIMOIRE — Light Theme
+   ═══════════════════════════════════════════ */
 :root {
-  --background: oklch(0.98 0.005 260);
-  --foreground: oklch(0.14 0.03 260);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.14 0.03 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.14 0.03 260);
-  --primary: oklch(0.55 0.2 142);
+  --background: oklch(0.97 0.005 140);
+  --foreground: oklch(0.18 0.02 160);
+  --card: oklch(0.99 0.003 140);
+  --card-foreground: oklch(0.18 0.02 160);
+  --popover: oklch(0.99 0.003 140);
+  --popover-foreground: oklch(0.18 0.02 160);
+  --primary: oklch(0.52 0.18 155);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.92 0.04 280);
-  --secondary-foreground: oklch(0.25 0.08 280);
-  --muted: oklch(0.94 0.01 260);
-  --muted-foreground: oklch(0.45 0.03 260);
-  --accent: oklch(0.88 0.1 55);
-  --accent-foreground: oklch(0.25 0.05 55);
-  --destructive: oklch(0.55 0.2 20);
+  --secondary: oklch(0.9 0.03 260);
+  --secondary-foreground: oklch(0.25 0.05 260);
+  --muted: oklch(0.93 0.008 150);
+  --muted-foreground: oklch(0.48 0.02 160);
+  --accent: oklch(0.88 0.12 65);
+  --accent-foreground: oklch(0.22 0.06 65);
+  --destructive: oklch(0.52 0.22 20);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.88 0.01 260);
-  --input: oklch(0.92 0.01 260);
-  --ring: oklch(0.55 0.2 142);
-  --chart-1: oklch(0.55 0.22 48);
-  --chart-2: oklch(0.6 0.2 142);
-  --chart-3: oklch(0.5 0.15 280);
-  --chart-4: oklch(0.55 0.15 200);
-  --chart-5: oklch(0.55 0.18 20);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.97 0.005 260);
-  --sidebar-foreground: oklch(0.14 0.03 260);
-  --sidebar-primary: oklch(0.55 0.2 142);
+  --border: oklch(0.88 0.01 150);
+  --input: oklch(0.9 0.01 150);
+  --ring: oklch(0.52 0.18 155 / 0.5);
+  --chart-1: oklch(0.52 0.18 155);
+  --chart-2: oklch(0.6 0.18 55);
+  --chart-3: oklch(0.55 0.12 280);
+  --chart-4: oklch(0.55 0.22 20);
+  --chart-5: oklch(0.5 0.18 220);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.96 0.005 150);
+  --sidebar-foreground: oklch(0.18 0.02 160);
+  --sidebar-primary: oklch(0.52 0.18 155);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0.01 260);
-  --sidebar-accent-foreground: oklch(0.14 0.03 260);
-  --sidebar-border: oklch(0.88 0.01 260);
-  --sidebar-ring: oklch(0.55 0.2 142);
+  --sidebar-accent: oklch(0.91 0.01 150);
+  --sidebar-accent-foreground: oklch(0.18 0.02 160);
+  --sidebar-border: oklch(0.87 0.01 150);
+  --sidebar-ring: oklch(0.52 0.18 155 / 0.5);
+
+  /* Arcane glow tokens */
+  --glow-emerald: 0 0 12px oklch(0.52 0.2 155 / 0.3);
+  --glow-amber: 0 0 12px oklch(0.65 0.18 65 / 0.3);
+  --glow-crimson: 0 0 12px oklch(0.52 0.22 20 / 0.3);
+  --card-shadow: 0 1px 3px oklch(0 0 0 / 0.04), 0 4px 12px oklch(0 0 0 / 0.03);
+  --card-shadow-hover: 0 2px 6px oklch(0 0 0 / 0.06), 0 8px 24px oklch(0 0 0 / 0.05);
 }
 
-/* ─── 深色主题覆写 ─── */
+/* ═══════════════════════════════════════════
+   ARCANEPUNK GRIMOIRE — Dark Theme
+   ═══════════════════════════════════════════ */
 .dark {
-  --background: oklch(0.14 0.02 260);
-  --foreground: oklch(0.92 0.01 260);
-  --card: oklch(0.17 0.02 260);
-  --card-foreground: oklch(0.92 0.01 260);
-  --popover: oklch(0.2 0.02 260);
-  --popover-foreground: oklch(0.92 0.01 260);
-  --primary: oklch(0.65 0.2 142);
-  --primary-foreground: oklch(0.12 0.01 260);
-  --secondary: oklch(0.42 0.12 280);
-  --secondary-foreground: oklch(0.95 0.01 280);
-  --muted: oklch(0.24 0.02 260);
-  --muted-foreground: oklch(0.6 0.02 260);
-  --accent: oklch(0.55 0.16 55);
-  --accent-foreground: oklch(0.12 0.01 55);
-  --destructive: oklch(0.55 0.2 20);
+  --background: oklch(0.1 0.008 160);
+  --foreground: oklch(0.9 0.01 150);
+  --card: oklch(0.13 0.012 160);
+  --card-foreground: oklch(0.9 0.01 150);
+  --popover: oklch(0.14 0.012 160);
+  --popover-foreground: oklch(0.9 0.01 150);
+  --primary: oklch(0.62 0.2 155);
+  --primary-foreground: oklch(0.1 0.01 160);
+  --secondary: oklch(0.22 0.04 265);
+  --secondary-foreground: oklch(0.9 0.01 265);
+  --muted: oklch(0.16 0.012 160);
+  --muted-foreground: oklch(0.58 0.02 155);
+  --accent: oklch(0.6 0.16 60);
+  --accent-foreground: oklch(0.12 0.01 60);
+  --destructive: oklch(0.52 0.2 20);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.28 0.02 260);
-  --input: oklch(0.24 0.02 260);
-  --ring: oklch(0.65 0.2 142);
-  --sidebar: oklch(0.17 0.02 260);
-  --sidebar-foreground: oklch(0.92 0.01 260);
-  --sidebar-primary: oklch(0.65 0.2 142);
-  --sidebar-primary-foreground: oklch(0.12 0.01 260);
-  --sidebar-accent: oklch(0.24 0.02 260);
-  --sidebar-accent-foreground: oklch(0.92 0.01 260);
-  --sidebar-border: oklch(0.28 0.02 260);
-  --sidebar-ring: oklch(0.65 0.2 142);
+  --border: oklch(0.2 0.015 160);
+  --input: oklch(0.18 0.015 160);
+  --ring: oklch(0.62 0.2 155 / 0.5);
+  --sidebar: oklch(0.11 0.01 160);
+  --sidebar-foreground: oklch(0.9 0.01 150);
+  --sidebar-primary: oklch(0.62 0.2 155);
+  --sidebar-primary-foreground: oklch(0.1 0.01 160);
+  --sidebar-accent: oklch(0.16 0.012 160);
+  --sidebar-accent-foreground: oklch(0.9 0.01 150);
+  --sidebar-border: oklch(0.2 0.015 160);
+  --sidebar-ring: oklch(0.62 0.2 155 / 0.5);
+
+  --glow-emerald: 0 0 16px oklch(0.58 0.22 155 / 0.35);
+  --glow-amber: 0 0 16px oklch(0.68 0.2 65 / 0.35);
+  --glow-crimson: 0 0 16px oklch(0.55 0.22 20 / 0.35);
+  --card-shadow: 0 1px 3px oklch(0 0 0 / 0.2), 0 4px 12px oklch(0 0 0 / 0.15);
+  --card-shadow-hover: 0 2px 6px oklch(0 0 0 / 0.3), 0 8px 24px oklch(0 0 0 / 0.2);
 }
 
 @layer base {
@@ -128,95 +145,90 @@
   }
 }
 
+/* ═══════════════════════════════════════════
+   Custom Utilities
+   ═══════════════════════════════════════════ */
+
+/* Arcane panel: floating card with glow-ready border */
+.arcane-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.arcane-panel:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* Glow ring for important interactive elements */
+.glow-ring {
+  box-shadow: var(--glow-emerald);
+}
+.glow-ring-amber {
+  box-shadow: var(--glow-amber);
+}
+.glow-ring-crimson {
+  box-shadow: var(--glow-crimson);
+}
+
+/* Shimmer bar animation for progress indicators */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer-bar {
+  background-size: 200% 100%;
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+
 /* ─── RPG 风格滚动条 ─── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--muted);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 3px;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--muted); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; opacity: 0.6; }
 
 /* ─── 浮动数值动画 ─── */
 @keyframes floatUp {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(0.8);
-  }
-  50% {
-    opacity: 0.8;
-    transform: translateY(-30px) scale(1.1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-70px) scale(0.9);
-  }
+  0% { opacity: 1; transform: translateY(0) scale(0.8); }
+  50% { opacity: 0.8; transform: translateY(-30px) scale(1.15); }
+  100% { opacity: 0; transform: translateY(-70px) scale(0.9); }
 }
-
 .animate-float-number {
   animation: floatUp 1.2s ease-out forwards;
   pointer-events: none;
   user-select: none;
 }
 
-/* ─── 删除线展开动画 ─── */
-@keyframes strikethrough {
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
-  }
+/* ─── 脉冲光晕 ─── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: var(--glow-emerald); }
+  50% { box-shadow: 0 0 20px oklch(0.58 0.22 155 / 0.5); }
+}
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
-.animate-strikethrough {
-  position: relative;
-}
-.animate-strikethrough::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 0%;
-  height: 2px;
-  background: var(--primary);
-  animation: strikethrough 0.4s ease-out forwards;
-}
+/* ─── 热力图色阶 ─── */
+.heatmap-0 { background-color: oklch(0.92 0.005 140); }
+.heatmap-1 { background-color: oklch(0.82 0.06 148); }
+.heatmap-2 { background-color: oklch(0.66 0.12 148); }
+.heatmap-3 { background-color: oklch(0.5 0.16 145); }
+.heatmap-4 { background-color: oklch(0.38 0.15 142); }
 
-/* ─── 热力图色阶 (自动响应浅色/深色) ─── */
-.heatmap-0 { background-color: oklch(0.92 0.005 260); }
-.heatmap-1 { background-color: oklch(0.78 0.08 148); }
-.heatmap-2 { background-color: oklch(0.62 0.14 145); }
-.heatmap-3 { background-color: oklch(0.48 0.16 142); }
-.heatmap-4 { background-color: oklch(0.38 0.14 140); }
+.dark .heatmap-0 { background-color: oklch(0.18 0.015 160); }
+.dark .heatmap-1 { background-color: oklch(0.28 0.06 150); }
+.dark .heatmap-2 { background-color: oklch(0.40 0.10 148); }
+.dark .heatmap-3 { background-color: oklch(0.54 0.16 146); }
+.dark .heatmap-4 { background-color: oklch(0.65 0.2 142); }
 
-.dark .heatmap-0 { background-color: oklch(0.22 0.02 260); }
-.dark .heatmap-1 { background-color: oklch(0.32 0.06 150); }
-.dark .heatmap-2 { background-color: oklch(0.42 0.10 148); }
-.dark .heatmap-3 { background-color: oklch(0.55 0.15 145); }
-.dark .heatmap-4 { background-color: oklch(0.68 0.17 140); }
-
-/* ── PWA / 移动端优化 ── */
+/* ─── PWA / 移动端优化 ─── */
 * {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+.safe-top { padding-top: env(safe-area-inset-top, 0px); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
-/* 刘海屏安全区域 */
-.safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* PWA standalone 模式（已安装到主屏幕） */
 @media (display-mode: standalone) {
-  /* 隐藏浏览器 UI 后的微调 */
-  body {
-    overscroll-behavior: none;
-  }
+  body { overscroll-behavior: none; }
 }
