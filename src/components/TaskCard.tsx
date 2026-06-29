@@ -111,29 +111,34 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
       exit={{ opacity: 0, x: -100, height: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={`
-        group relative flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border select-none
-        transition-colors duration-200
+        group relative flex items-center gap-2.5 sm:gap-3.5 p-3.5 sm:p-4 rounded-xl border select-none
+        transition-all duration-300 hover:shadow-xs
         ${
           task.completed
-            ? "bg-muted/50 border-border/30 opacity-60"
+            ? "bg-muted/40 border-border/20 opacity-50 shadow-inner"
             : isExpired
-            ? "bg-destructive/5 border-destructive/10 opacity-50"
+            ? "bg-destructive/5 border-destructive/20 opacity-50 shadow-xs"
             : canComplete
-            ? `bg-card border-border hover:border-primary/40 hover:bg-accent/50 cursor-pointer ${difficultyBorder[task.difficulty]}`
-            : "bg-card border-border opacity-70"
+            ? `bg-card border-border/80 hover:border-primary/40 hover:bg-card/90 cursor-pointer shadow-xs hover:shadow-md ${difficultyBorder[task.difficulty]}`
+            : "bg-card/50 border-border/50 opacity-60"
         }
       `}
-      whileHover={canComplete ? { scale: 1.01 } : {}}
+      whileHover={canComplete ? { scale: 1.005, translateY: -1 } : {}}
       onClick={canComplete ? handleComplete : undefined}
     >
+      {/* ── 难度极光条 ── */}
+      {!task.completed && (
+        <div className={`absolute left-0 top-0 bottom-0 w-[4px] rounded-l-xl bg-current ${difficultyColors[task.difficulty]}`} />
+      )}
+
       {/* ── 完成按钮 ── */}
       {canComplete ? (
         <button
           onClick={handleComplete}
           className={`
-            relative flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center
+            relative flex-shrink-0 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center
             transition-all duration-200
-            border-muted-foreground/40 hover:border-primary hover:bg-primary/10
+            border-muted-foreground/35 hover:border-primary hover:bg-primary/10 hover:scale-105 active:scale-95
           `}
         >
           {task.completed && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
@@ -141,7 +146,7 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
       ) : (
         <div
           className={`
-            relative flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center
+            relative flex-shrink-0 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center
             ${task.completed ? "bg-primary border-primary" : "border-muted-foreground/20"}
           `}
         >
@@ -157,9 +162,9 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <span
-            className={`text-sm font-medium truncate min-w-0 ${
+            className={`text-sm font-semibold truncate min-w-0 ${
               task.completed
-                ? "line-through text-muted-foreground"
+                ? "line-through text-muted-foreground/60"
                 : "text-foreground"
             }`}
           >
@@ -185,8 +190,8 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
         {/* 描述 */}
         {task.description && (
           <p
-            className={`text-xs mt-0.5 ${
-              task.completed ? "text-muted-foreground/50" : "text-muted-foreground"
+            className={`text-xs mt-1 ${
+              task.completed ? "text-muted-foreground/40" : "text-muted-foreground/85"
             }`}
           >
             {task.description}
@@ -195,23 +200,23 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
 
         {/* 日常任务元信息 */}
         {isHabit && (
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span className="text-[10px] text-muted-foreground/80 flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {frequencyLabels[task.frequency || "daily"]}
             </span>
             {task.frequency === "weekly" && task.frequencyDays && (
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[10px] text-muted-foreground/80">
                 · {task.frequencyDays.split(",").map((d) => WEEKDAY_LABELS[parseInt(d)]).join("")}
               </span>
             )}
             {task.timeOfDay && task.timeOfDay !== "anytime" && (
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[10px] text-muted-foreground/80">
                 · {timeOfDayLabels[task.timeOfDay]}
               </span>
             )}
             {task.reminderTime && (
-              <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+              <span className="text-[10px] text-amber-500/80 flex items-center gap-0.5 font-medium">
                 <Clock className="w-3 h-3" />
                 {task.reminderTime}
               </span>
@@ -221,16 +226,16 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
 
         {/* 任务日期 */}
         {isPlan && task.targetDate && (
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className="flex items-center gap-1">
               <Target className="w-3 h-3 text-muted-foreground" />
-              <span className={`text-[10px] ${isExpired ? "text-red-400" : diffColor}`}>
+              <span className={`text-[10px] font-medium ${isExpired ? "text-red-400/80" : diffColor}`}>
                 {task.targetDate}
                 {isExpired && " · 已过期"}
               </span>
             </span>
             {task.reminderTime && (
-              <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+              <span className="text-[10px] text-amber-500/80 flex items-center gap-0.5 font-medium">
                 <Clock className="w-3 h-3" />
                 {task.reminderTime}
               </span>
@@ -240,68 +245,74 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
       </div>
 
       {/* ── 右侧信息 ── */}
-      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {/* 难度标签 */}
         <span
-          className={`text-[9px] sm:text-[10px] font-medium px-1 sm:px-1.5 py-0.5 rounded border ${
+          className={`text-[9px] sm:text-[10px] font-semibold px-1.5 py-0.5 rounded border transition-all duration-300 ${
             difficultyBorder[task.difficulty]
-          } ${diffColor}`}
+          } ${diffColor} bg-current/5`}
         >
           {difficultyLabels[task.difficulty]}
         </span>
 
         {/* 奖励 */}
-        <div className="flex flex-col items-end gap-0.5">
-          <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400">
+        <div className="flex flex-col items-end gap-0.5 min-w-[50px]">
+          <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400/90 tracking-tight">
             +{task.xpReward} XP
           </span>
-          <span className="text-[9px] sm:text-[10px] font-bold text-amber-400">
+          <span className="text-[9px] sm:text-[10px] font-bold text-amber-400/90 tracking-tight">
             +{task.goldReward} G
           </span>
         </div>
 
-        {/* 历史最佳 — 移动端隐藏（行内已显示连击数，避免重复占位） */}
+        {/* 历史最佳 */}
         {isHabit && task.bestStreak > 0 && (
           <div className="hidden sm:flex items-center gap-0.5">
             <Star className="w-3 h-3 text-amber-400" />
-            <span className="text-[10px] text-amber-400">{task.bestStreak}</span>
+            <span className="text-[10px] font-bold text-amber-400">{task.bestStreak}</span>
           </div>
         )}
 
-        {/* 编辑 */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(task);
-          }}
-          className="p-1 sm:p-1.5 hover:bg-accent rounded"
-        >
-          <Pencil className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-        </button>
-
-        {/* 撤销 */}
-        {task.completed && (
+        {/* 操作区 (hover时淡入) */}
+        <div className="flex items-center gap-1 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          {/* 编辑 */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onUncomplete(task.id);
+              onEdit(task);
             }}
-            className="p-1 sm:p-1.5 hover:bg-amber-500/10 rounded"
+            className="p-1 sm:p-1.5 hover:bg-muted/80 rounded-md transition-colors"
+            title="修改任务"
           >
-            <RotateCcw className="w-4 h-4 text-amber-400" />
+            <Pencil className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
           </button>
-        )}
 
-        {/* 删除 */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(task.id);
-          }}
-          className="p-1 sm:p-1.5 hover:bg-destructive/10 rounded"
-        >
-          <Trash2 className="w-4 h-4 text-destructive/60 hover:text-destructive" />
-        </button>
+          {/* 撤销 */}
+          {task.completed && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onUncomplete(task.id);
+              }}
+              className="p-1 sm:p-1.5 hover:bg-amber-500/10 rounded-md transition-colors"
+              title="撤销完成"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+            </button>
+          )}
+
+          {/* 删除 */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task.id);
+            }}
+            className="p-1 sm:p-1.5 hover:bg-destructive/10 rounded-md transition-colors"
+            title="物理抹除"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-destructive/60 hover:text-destructive" />
+          </button>
+        </div>
       </div>
 
       {/* ── CLEAR 印章（已完成日常任务）── */}
@@ -310,9 +321,9 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
           initial={{ scale: 0, rotate: -15 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ duration: 0.3, ease: "backOut" }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 -rotate-12 pointer-events-none"
+          className="absolute right-12 top-1/2 -translate-y-1/2 -rotate-12 pointer-events-none"
         >
-          <span className="text-[10px] font-black text-emerald-400/30 border-2 border-emerald-400/20 rounded px-2 py-1 tracking-widest select-none">
+          <span className="text-[10px] font-black text-emerald-400/20 border-2 border-emerald-400/15 rounded px-2 py-0.5 tracking-widest select-none">
             CLEAR
           </span>
         </motion.div>
@@ -324,7 +335,7 @@ export function TaskCard({ task, onComplete, onDelete, onEdit, onUncomplete }: T
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
-          className="absolute left-10 right-0 top-1/2 h-[2px] bg-primary/40 origin-left"
+          className="absolute left-10 right-28 top-1/2 h-[1px] bg-muted-foreground/20 origin-left pointer-events-none"
         />
       )}
     </motion.div>
