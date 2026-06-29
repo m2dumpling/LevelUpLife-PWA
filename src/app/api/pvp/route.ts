@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import { checkRate } from "@/lib/rate-limiter";
@@ -7,7 +7,7 @@ import { getTodayLocal } from "@/lib/date-utils";
 
 const TAX = 2;
 const MATCH_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes for waiting matches
-const SUBMIT_TIMEOUT_MS = 30_000; // 30 seconds for submission phase
+const SUBMIT_TIMEOUT_MS = 30_000; // 30 seconds after match enters "playing"
 
 // ── DB helpers ──
 
@@ -31,14 +31,14 @@ function getUserGold(userId: number): number {
 
 function deductGold(userId: number, amount: number): void {
   db.update(schema.user)
-    .set({ gold: getUserGold(userId) - amount })
+    .set({ gold: sql`${schema.user.gold} - ${amount}` })
     .where(eq(schema.user.id, userId))
     .run();
 }
 
 function addGold(userId: number, amount: number): void {
   db.update(schema.user)
-    .set({ gold: getUserGold(userId) + amount })
+    .set({ gold: sql`${schema.user.gold} + ${amount}` })
     .where(eq(schema.user.id, userId))
     .run();
 }
@@ -113,21 +113,42 @@ function parseResult(m: { result: string | null }): Record<string, unknown> {
 
 /**
  * Return client-safe match data.
- * For Math matches that are still "playing", strip the correct answer
- * so players can't cheat by inspecting the API response.
+ * - "waiting": NEVER expose math problem/answer or dice roll to anyone
+ * - "playing": expose math problem (a,b,op) but strip answer;
+ *              expose dice only to the opponent (not creator who may cancel)
+ * - "completed": expose everything
  */
 function getMatchClient(m: MatchRow): Record<string, unknown> {
   const parsed = parseResult(m);
-
   let sanitizedResult = m.result;
-  if (
-    m.status === "playing" &&
-    m.type === "math" &&
-    parsed &&
-    typeof parsed.answer === "number"
-  ) {
-    const { answer: _a, ...safe } = parsed as Record<string, unknown>;
-    sanitizedResult = JSON.stringify(safe);
+
+  if (m.type === "math" && parsed && typeof parsed.answer === "number") {
+    if (m.status === "waiting") {
+      // 等待中：不泄露题目和答案给任何人（创建者也不能提前看）
+      sanitizedResult = JSON.stringify({ waiting: true, type: "math" });
+    } else if (m.status === "playing") {
+      // 对战中：显示题目但隐藏答案
+      const { answer: _a, ...safe } = parsed as Record<string, unknown>;
+      sanitizedResult = JSON.stringify(safe);
+    }
+    // completed: 显示完整结果（含答案）
+  }
+
+  if (m.type === "dice" && parsed && typeof parsed.player1Roll === "number") {
+    if (m.status === "waiting") {
+      // 等待中：不泄露创建者骰子点数（防止低点取消重开）
+      sanitizedResult = JSON.stringify({ waiting: true, type: "dice" });
+    }
+    // playing/completed: 骰子结果已在加入时结算，正常显示
+  }
+
+  // 清理内部时间戳，不暴露给客户端
+  if (sanitizedResult) {
+    try {
+      const obj = JSON.parse(sanitizedResult);
+      delete (obj as Record<string, unknown>).playingStartedAt;
+      sanitizedResult = JSON.stringify(obj);
+    } catch { /* if not valid JSON, leave as-is */ }
   }
 
   return {
@@ -174,13 +195,18 @@ function checkSubmissionTimeout(
 ): { timedOut: boolean } {
   if (match.status !== "playing") return { timedOut: false };
 
-  const elapsed = Date.now() - new Date(match.createdAt).getTime();
+  const result = parseResult(match);
+  const playingStartedAt = result.playingStartedAt as string | undefined;
+
+  // 用 playingStartedAt（加入时刻）而非 createdAt（创建时刻）计算超时
+  const startTime = playingStartedAt
+    ? new Date(playingStartedAt).getTime()
+    : new Date(match.createdAt).getTime();
+  const elapsed = Date.now() - startTime;
   if (elapsed < SUBMIT_TIMEOUT_MS) return { timedOut: false };
 
-  const result = parseResult(match);
   const hasSubmission =
     result.player1Move || result.player2Move || result.submittedAnswer;
-
   if (hasSubmission) return { timedOut: false };
 
   // No submissions after timeout — cancel and refund
@@ -629,10 +655,13 @@ async function handleJoin(
   }
 
   // ── RPS / Math: set playing, both submit moves ──
+  // Record playingStartedAt so timeout is relative to match start, not creation
+  const playingResult = { ...parseResult(match), playingStartedAt: new Date().toISOString() };
   db.update(schema.pvpMatch)
     .set({
       player2Id: userId,
       status: "playing",
+      result: JSON.stringify(playingResult),
     })
     .where(eq(schema.pvpMatch.id, matchId))
     .run();
