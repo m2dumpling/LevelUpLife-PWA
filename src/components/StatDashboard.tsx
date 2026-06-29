@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Swords, Coins, Heart, Flame, Zap, Trophy, X } from "lucide-react";
 import { XPBar } from "./XPBar";
@@ -84,9 +85,9 @@ export function StatDashboard({ stats, loading }: StatDashboardProps) {
         距离 Lv.{stats.level + 1} 还需 {stats.xpToNext - stats.xp} XP
       </p>
 
-      {/* Detail modal */}
-      <AnimatePresence>
-        {detail && (
+      {/* Detail modal — Portal 到 body，隔离 Framer Motion 父级 transform */}
+      {typeof window !== "undefined" && detail && createPortal(
+        <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -144,8 +145,9 @@ export function StatDashboard({ stats, loading }: StatDashboardProps) {
               </div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
