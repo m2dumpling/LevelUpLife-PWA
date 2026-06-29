@@ -54,9 +54,42 @@ export async function GET(request: Request) {
       return NextResponse.json(rewards);
     }
 
-    // HP history — approximate from settlement logs and login recovery
+    // HP history — 从结算记录推算 HP 变化
     if (type === "hp") {
-      return NextResponse.json([]);
+      const user = db.select({ hp: schema.user.hp, maxHp: schema.user.maxHp, hpPenaltyActive: schema.user.hpPenaltyActive, lastSettlementDate: schema.user.lastSettlementDate, lastLoginDate: schema.user.lastLoginDate })
+        .from(schema.user).where(eq(schema.user.id, userId)).get();
+
+      // 最近 30 天的 habit 完成记录（HP 不掉的日子 = 完成了当天全部习惯）
+      const recentLogs = db.select({ date: schema.habitLog.completedAt })
+        .from(schema.habitLog).where(eq(schema.habitLog.userId, userId))
+        .orderBy(desc(schema.habitLog.completedAt)).limit(30).all();
+
+      // 最近 30 天的结算日期（有结算就有机会扣血）
+      const recentSettlements = db.select({ date: schema.rewardLedger.completedDate, title: schema.rewardLedger.taskTitle, xp: schema.rewardLedger.xpEarned })
+        .from(schema.rewardLedger).where(eq(schema.rewardLedger.userId, userId))
+        .orderBy(desc(schema.rewardLedger.createdAt)).limit(30).all();
+
+      // 去重日期并标记当天是否有活跃
+      const activeDates = new Set(recentLogs.map(l => l.date));
+      const result = recentSettlements.map(s => ({
+        date: s.date,
+        title: s.title,
+        xp: s.xp,
+        source: activeDates.has(s.date) ? "任务完成 · 生命稳固" : "当日无记录 · 可能扣血",
+        type: "settlement",
+      }));
+
+      if (result.length === 0) {
+        return NextResponse.json([{
+          date: user?.lastSettlementDate || "—",
+          title: `当前 HP: ${user?.hp ?? "?"} / ${user?.maxHp ?? "?"}`,
+          xp: 0,
+          source: user?.hpPenaltyActive ? "⚠️ 虚弱状态" : "暂无 HP 变动记录",
+          type: "status",
+        }]);
+      }
+
+      return NextResponse.json(result);
     }
 
     return NextResponse.json([]);
