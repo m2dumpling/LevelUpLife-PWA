@@ -33,8 +33,9 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export async function POST(request: Request) {
-  // Rate limiting
+  // Rate limiting — 优先用 Cloudflare 真实 IP，防止 X-Forwarded-For 伪造绕过
   const ip =
+    request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||
     "127.0.0.1";

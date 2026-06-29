@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getUserId } from "@/lib/auth";
 import { SHOP_ORES } from "@/lib/shop-data";
@@ -27,58 +27,54 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "用户不存在" }, { status: 404 });
     }
 
-    // Admin 无限金币
+    // 扣金币：普通用户用 SQL 原子减法防止竞态，admin 跳过
     if (user.role !== "admin") {
-      if (user.gold < ore.cost) {
+      db.update(schema.user)
+        .set({
+          gold: sql`${schema.user.gold} - ${ore.cost}`,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(
+          and(
+            eq(schema.user.id, userId),
+            sql`${schema.user.gold} >= ${ore.cost}`,
+          )
+        )
+        .run();
+
+      // 重新读取确认扣款成功（WHERE 条件失败则 gold 不变）
+      const after = db.select({ gold: schema.user.gold }).from(schema.user).where(eq(schema.user.id, userId)).get();
+      if (!after || after.gold >= user.gold) {
         return NextResponse.json({ error: "金币不足" }, { status: 400 });
       }
-      db.update(schema.user)
-        .set({ gold: user.gold - ore.cost, updatedAt: new Date().toISOString() })
-        .where(eq(schema.user.id, userId))
-        .run();
     }
 
     // 加库存（upsert）
     const existing = db
       .select()
       .from(schema.inventory)
-      .where(
-        and(
-          eq(schema.inventory.userId, userId),
-          eq(schema.inventory.itemKey, itemKey)
-        )
-      )
+      .where(and(eq(schema.inventory.userId, userId), eq(schema.inventory.itemKey, itemKey)))
       .get();
     if (existing) {
       db.update(schema.inventory)
         .set({ quantity: existing.quantity + 1 })
-        .where(
-          and(
-            eq(schema.inventory.userId, userId),
-            eq(schema.inventory.itemKey, itemKey)
-          )
-        )
+        .where(and(eq(schema.inventory.userId, userId), eq(schema.inventory.itemKey, itemKey)))
         .run();
     } else {
-      db.insert(schema.inventory)
-        .values({ userId, itemKey, quantity: 1, equipped: false })
-        .run();
+      db.insert(schema.inventory).values({ userId, itemKey, quantity: 1, equipped: false }).run();
     }
 
     const updated = db
       .select()
       .from(schema.inventory)
-      .where(
-        and(
-          eq(schema.inventory.userId, userId),
-          eq(schema.inventory.itemKey, itemKey)
-        )
-      )
+      .where(and(eq(schema.inventory.userId, userId), eq(schema.inventory.itemKey, itemKey)))
       .get();
+
+    const finalGold = db.select({ gold: schema.user.gold }).from(schema.user).where(eq(schema.user.id, userId)).get();
 
     return NextResponse.json({
       success: true,
-      gold: user.role === "admin" ? user.gold : user.gold - ore.cost,
+      gold: finalGold?.gold ?? user.gold,
       item: { itemKey: updated!.itemKey, quantity: updated!.quantity, equipped: updated!.equipped },
     });
   } catch (e) {

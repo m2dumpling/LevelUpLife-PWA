@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { getUserId } from "@/lib/auth";
 import { getTodayLocal } from "@/lib/date-utils";
 
@@ -31,12 +31,20 @@ export async function POST(request: Request) {
       const amount = parseInt(giftValue || "0");
       if (!amount || amount < 1) return NextResponse.json({ error: "金币数量无效" }, { status: 400 });
 
-      const user = db.select({ gold: schema.user.gold }).from(schema.user).where(eq(schema.user.id, userId)).get();
-      if (!user || user.gold < amount) return NextResponse.json({ error: "金币不足" }, { status: 400 });
+      // 原子扣款：WHERE gold >= amount 防止竞态条件导致金币负数
+      db.update(schema.user)
+        .set({ gold: sql`${schema.user.gold} - ${amount}` })
+        .where(and(eq(schema.user.id, userId), sql`${schema.user.gold} >= ${amount}`))
+        .run();
 
-      db.update(schema.user).set({ gold: user.gold - amount }).where(eq(schema.user.id, userId)).run();
-      const target = db.select({ gold: schema.user.gold }).from(schema.user).where(eq(schema.user.id, toUserId)).get();
-      if (target) db.update(schema.user).set({ gold: target.gold + amount }).where(eq(schema.user.id, toUserId)).run();
+      const sender = db.select({ gold: schema.user.gold }).from(schema.user).where(eq(schema.user.id, userId)).get();
+      if (!sender || sender.gold < 0) return NextResponse.json({ error: "金币不足" }, { status: 400 });
+
+      // 原子加款
+      db.update(schema.user)
+        .set({ gold: sql`${schema.user.gold} + ${amount}` })
+        .where(eq(schema.user.id, toUserId))
+        .run();
 
       db.insert(schema.giftLog).values({ fromUserId: userId, toUserId, giftType: "gold", giftValue: String(amount), date: today }).run();
       return NextResponse.json({ success: true, message: `送出 ${amount}G` });
@@ -46,14 +54,22 @@ export async function POST(request: Request) {
       const oreKey = giftValue;
       if (!ORE_KEYS.includes(oreKey as any)) return NextResponse.json({ error: "无效的矿石类型" }, { status: 400 });
 
+      // 原子扣库存：WHERE quantity >= 1 防竞态
       const inv = db.select().from(schema.inventory).where(and(eq(schema.inventory.userId, userId), eq(schema.inventory.itemKey, oreKey))).get();
       if (!inv || inv.quantity < 1) return NextResponse.json({ error: "你没有这个矿石" }, { status: 400 });
 
-      db.update(schema.inventory).set({ quantity: inv.quantity - 1 }).where(eq(schema.inventory.id, inv.id)).run();
+      db.update(schema.inventory)
+        .set({ quantity: sql`${schema.inventory.quantity} - 1` })
+        .where(and(eq(schema.inventory.id, inv.id), sql`${schema.inventory.quantity} >= 1`))
+        .run();
 
+      // 原子加库存
       const targetInv = db.select().from(schema.inventory).where(and(eq(schema.inventory.userId, toUserId), eq(schema.inventory.itemKey, oreKey))).get();
       if (targetInv) {
-        db.update(schema.inventory).set({ quantity: targetInv.quantity + 1 }).where(eq(schema.inventory.id, targetInv.id)).run();
+        db.update(schema.inventory)
+          .set({ quantity: sql`${schema.inventory.quantity} + 1` })
+          .where(eq(schema.inventory.id, targetInv.id))
+          .run();
       } else {
         db.insert(schema.inventory).values({ userId: toUserId, itemKey: oreKey, quantity: 1, equipped: false }).run();
       }
